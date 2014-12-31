@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 public class SnapshotTest {
 	private final SnapshotMetaData data = new SnapshotMetaData(
-			"source", "url", "ip", "domainDetails", "dns", "digest");
+			"source", "url", "ip", "domainDetails", "dns", "digest", 1000L);
 	private byte[] image = new byte[] {1, 2};
 	private final Snapshot snapshot = new Snapshot(image, data);
 	
@@ -47,6 +47,7 @@ public class SnapshotTest {
 		Assert.assertEquals(data.getIp(), data2.getIp());
 		Assert.assertEquals(data.getDomainDetails(), data2.getDomainDetails());
 		Assert.assertEquals(data.getDigest(), data2.getDigest());
+		Assert.assertEquals(data.getTimestamp(), data2.getTimestamp());
 		// Test image
 		byte[] image2 = snapshot2.getImage();
 		Assert.assertEquals(image[0], image2[0]);

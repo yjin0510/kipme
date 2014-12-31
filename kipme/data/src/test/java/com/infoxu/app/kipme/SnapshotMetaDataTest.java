@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 
 public class SnapshotMetaDataTest {
 	private final SnapshotMetaData data = new SnapshotMetaData(
-			"source", "url", "ip", "domainDetails", "dns", "digest");
+			"source", "url", "ip", "domainDetails", "dns", "digest", 1000L);
 	@Test
 	public void testClone() {		
 		SnapshotMetaData data2 = new SnapshotMetaData(data);
@@ -21,6 +21,7 @@ public class SnapshotMetaDataTest {
 		Assert.assertEquals(data.getIp(), data2.getIp());
 		Assert.assertEquals(data.getDomainDetails(), data2.getDomainDetails());
 		Assert.assertEquals(data.getDigest(), data2.getDigest());
+		Assert.assertEquals(data.getTimestamp(), data2.getTimestamp());
 		Assert.assertFalse(data == data2);
 	}
 	
@@ -40,6 +41,7 @@ public class SnapshotMetaDataTest {
 		Assert.assertEquals(data.getIp(), data2.getIp());
 		Assert.assertEquals(data.getDomainDetails(), data2.getDomainDetails());
 		Assert.assertEquals(data.getDigest(), data2.getDigest());
+		Assert.assertEquals(data.getTimestamp(), data2.getTimestamp());
 		Assert.assertFalse(data == data2);
 	}
 }

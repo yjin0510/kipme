@@ -23,16 +23,18 @@ public class SnapshotMetaData implements Serializable {
 	private final String domainDetails; // Owner, host, etc., from whois lookup
 	private final String dns; // From nslookup results
 	private final String digest; // Image digest from SHA-1 256
+	private final long timestamp; // Time when the snapshot is taken
 	
 	public SnapshotMetaData(String source, String url, 
 			String ip, String domainDetails, 
-			String dns, String digest) {
+			String dns, String digest, long timestamp) {
 		this.source = source;
 		this.url = url;
 		this.ip = ip;
 		this.domainDetails = domainDetails;
 		this.dns = dns;
 		this.digest = digest;
+		this.timestamp = timestamp;
 	}
 	
 	/**
@@ -46,6 +48,7 @@ public class SnapshotMetaData implements Serializable {
 		this.domainDetails = toClone.getDomainDetails();
 		this.dns = toClone.getDns();
 		this.digest = toClone.getDigest();
+		this.timestamp = toClone.getTimestamp();
 	}
 
 	/**
@@ -88,5 +91,12 @@ public class SnapshotMetaData implements Serializable {
 	 */
 	public String getDigest() {
 		return digest;
+	}
+
+	/**
+	 * @return the timestamp
+	 */
+	public long getTimestamp() {
+		return timestamp;
 	}
 }
