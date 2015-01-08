@@ -9,7 +9,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
@@ -17,12 +21,17 @@ import org.apache.commons.daemon.DaemonInitException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.validator.routines.UrlValidator;
+import org.openqa.selenium.WebDriverException;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.collect.Lists;
 import com.infoxu.app.keepme.data.Message;
 import com.infoxu.app.keepme.data.RequestMessage;
 import com.infoxu.app.keepme.data.Snapshot;
 import com.infoxu.app.keepme.data.SnapshotMetaData;
+import com.infoxu.app.keepme.monitor.Auditable;
+import com.infoxu.app.keepme.monitor.Auditor;
 import com.infoxu.app.keepme.queue.MessageQueueFactory;
 import com.infoxu.app.keepme.queue.MessageQueueReceiver;
 import com.infoxu.app.keepme.queue.MessageQueueSender;
@@ -51,8 +60,9 @@ public class WebShotService implements Daemon {
 	private static final int NUM_WORKERS = Integer.parseInt(ServiceProperty.getInstance()
 			.getProperty("webshot.number.worker", "1"));
 	
-	List<Worker> workers = Lists.newArrayList();
-
+	// With an additional monitoring thread
+	private ExecutorService executor = Executors.newFixedThreadPool(NUM_WORKERS + 1);
+	
 	/**
 	 * @param args
 	 * @throws Exception 
@@ -84,34 +94,33 @@ public class WebShotService implements Daemon {
 	}
 
 	public void destroy() {
-		workers.clear();
-		workers = null;
+		executor.shutdown();
 		logger.info("WebShotService cleared.");
 	}
 
 	public void init(DaemonContext arg0) throws DaemonInitException, Exception {
+		Auditor auditor = new Auditor();
+		executor.execute(auditor);
+		
+		// Create and register workers
 		for (int i = 0; i < NUM_WORKERS; i++) {
-			workers.add(new Worker(i));
+			Worker worker = new Worker(i);
+			executor.execute(worker);
+			auditor.register(worker);
 		}
 		logger.info("WebShotService initialized.");
 	}
-	
+
 	public void start() throws Exception {
-		for (Worker worker : workers) {
-			worker.start();
-			logger.info("Webshot worker " + worker.getTid() + " started.");
-		}
+		
 	}
 	
 	public void stop() throws Exception {
-		for (Worker worker : workers) {
-			worker.setStop();
-			logger.info("Webshot worker " + worker.getTid() + " stopped.");
-		}
+		
 	}
 
 	// Worker class
-	private class Worker extends Thread {
+	private class Worker extends Thread implements Auditable {
 		private volatile boolean stop = false;
 		private int tid;
 		// Retrieve a message from the request queue
@@ -125,6 +134,9 @@ public class WebShotService implements Daemon {
 		// One for each worker
 		private SeleniumSnapshotRetriever ssr = 
 				new SeleniumSnapshotRetriever(SSRType.SELENIUM_FIREFOX);
+		// Counters
+		private Map<Message.Status, Integer> counters = 
+				new EnumMap<Message.Status, Integer>(Message.Status.class);
 		
 		public Worker(int tid) {
 			this.tid = tid;
@@ -144,6 +156,11 @@ public class WebShotService implements Daemon {
 					logger.info("Worker " + tid + " received request: " 
 							+ request.getReqId() + ", " + request.getUrl());
 					Message reply = process(request);
+					// Log the process results
+					counters.put(reply.getStatus(), 
+							counters.get(reply.getStatus()) == null ? 
+									1 : counters.get(reply.getStatus()) + 1);
+					
 					logger.info("Worker " + tid + " get info " + reply.toString());
 //					sendQ.send(reply);
 					logger.debug("Worker " + tid + " send req " + request.getReqId() + " to reply_queue");
@@ -187,6 +204,9 @@ public class WebShotService implements Daemon {
 						+ request.getReqId() + " : "+ e.getMessage());				
 				Message reply = new Message(Message.Status.FAIL_IMAGE, null, request);
 				return reply;
+			} catch (WebDriverException e) {
+				logger.error("Thread " + this.tid + " receives exception from the driver: " 
+						+ e.getCause().getMessage());
 			}
 			
 			// INCOMPLETE
@@ -229,6 +249,15 @@ public class WebShotService implements Daemon {
 		// Flag to stop the thread
 		public void setStop() {
 			stop = true;
+		}
+
+		public String getStatus() {
+			ToStringHelper helper = MoreObjects.toStringHelper(this)
+					.add("Worker_ID", this.tid);
+			for (Message.Status status : Message.Status.values()) {
+				helper.add(status.name(), counters.get(status));
+			}
+			return helper.toString();
 		}
 	}
 }
