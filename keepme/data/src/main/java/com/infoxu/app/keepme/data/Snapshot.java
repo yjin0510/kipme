@@ -4,8 +4,14 @@
  */
 package com.infoxu.app.keepme.data;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.google.common.base.MoreObjects;
 
@@ -57,19 +63,43 @@ public final class Snapshot implements Serializable {
 		return metaData;
 	}
 	
+	/**
+	 * For serialization, we compress the Snapshot object and store the
+	 * compressed object in database and cache
+	 * @param out
+	 * @throws IOException
+	 */
 	private void writeObject(java.io.ObjectOutputStream out)
 		     throws IOException {
-		out.writeInt(this.image.length);
-		out.write(this.image);
-		out.writeObject(this.metaData);
+		// Compress the data into a byte array
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		GZIPOutputStream gzout = new GZIPOutputStream(baos);
+		ObjectOutputStream objOut = new ObjectOutputStream(gzout);
+		objOut.writeInt(this.image.length);
+		objOut.write(this.image);
+		objOut.writeObject(this.metaData);
+		objOut.close();
+		// Serialize the byte array
+		byte[] data = baos.toByteArray();
+		out.writeInt(data.length);
+		out.write(data);
 	}
 	
 	private void readObject(java.io.ObjectInputStream in)
 		     throws IOException, ClassNotFoundException {
-		int size = in.readInt();
+		// Read the compressed data trunk
+		int dataSize = in.readInt();
+		byte[] data = new byte[dataSize];
+		in.read(data);
+		// Decompress to restore the data
+		ByteArrayInputStream bais = new ByteArrayInputStream(data);
+		GZIPInputStream gzin = new GZIPInputStream(bais);
+		ObjectInputStream objIn = new ObjectInputStream(gzin);
+		int size = objIn.readInt();
 		this.image = new byte[size];
-		in.read(this.image);
-		this.metaData = (SnapshotMetaData) in.readObject();
+		objIn.read(this.image);
+		this.metaData = (SnapshotMetaData) objIn.readObject();
+		objIn.close();
 	}
 	
 	@Override
