@@ -4,8 +4,8 @@
  */
 package com.infoxu.app.keepme.data.storage;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
@@ -19,7 +19,7 @@ import com.infoxu.app.keepme.data.hibernate.SnapshotRecord;
  *
  */
 class DatabaseStorage implements Storage {
-	private static final Log logger = LogFactory.getLog(DatabaseStorage.class);
+	private static final Logger logger = LogManager.getLogger(DatabaseStorage.class);
 	private SessionFactory sessionFactory = null;
 	private Session session = null;
 	

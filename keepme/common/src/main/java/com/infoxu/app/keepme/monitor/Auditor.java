@@ -6,8 +6,8 @@ package com.infoxu.app.keepme.monitor;
 
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.google.common.collect.Lists;
 
@@ -17,7 +17,7 @@ import com.google.common.collect.Lists;
  *
  */
 public class Auditor implements Runnable {
-	private static final Log logger = LogFactory.getLog(Auditor.class);
+	private static final Logger logger = LogManager.getLogger(Auditor.class);
 	private static final int MONITOR_INTERVAL_MILLIS = 30000;
 	private List<Auditable> list = Lists.newArrayList();
 	

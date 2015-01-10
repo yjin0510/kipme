@@ -8,15 +8,15 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author yujin
  *
  */
 final class IPMetaDataRetriever extends BaseMetaDataRetriever {
-	private static Log logger = LogFactory.getLog(IPMetaDataRetriever.class);
+	private static Logger logger = LogManager.getLogger(IPMetaDataRetriever.class);
 	@Override
 	protected String process(URL url) {
 		InetAddress[] machines;

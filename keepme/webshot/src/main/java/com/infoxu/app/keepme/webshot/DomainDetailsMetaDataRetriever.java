@@ -9,9 +9,9 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.commons.net.whois.WhoisClient;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.infoxu.app.keepme.util.ServiceProperty;
 
@@ -20,7 +20,7 @@ import com.infoxu.app.keepme.util.ServiceProperty;
  *
  */
 final class DomainDetailsMetaDataRetriever extends BaseMetaDataRetriever {
-	private static final Log logger = LogFactory.getLog(DomainDetailsMetaDataRetriever.class);
+	private static final Logger logger = LogManager.getLogger(DomainDetailsMetaDataRetriever.class);
 	
 	// Regex variables for finding the right DNS registrar
 	private static Pattern pattern;
@@ -46,7 +46,7 @@ final class DomainDetailsMetaDataRetriever extends BaseMetaDataRetriever {
 			whois.connect(WHOIS_SERVER);
 			result = whois.query(ip);
 		} catch (Exception e) {
-			logger.error("Unable to retrieve DNS information for URL: " + url + ", " + e.getMessage());
+			logger.error("Unable to retrieve DNS information for URL: " + url, e);
 			result = "Failed to retrieve DNS information for URL: " + url.toString();
 		}
 		return result;
@@ -87,7 +87,7 @@ final class DomainDetailsMetaDataRetriever extends BaseMetaDataRetriever {
 		  }
  
 		} catch (Exception e) {
-			logger.error("Unable to retrieve DNS information for URL: " + url + ", " + e.getMessage());
+			logger.error("Unable to retrieve DNS information for URL: " + url, e);
 			return "Failed to retrieve DNS information for URL: " + url.toString();
 		}
  
@@ -96,7 +96,6 @@ final class DomainDetailsMetaDataRetriever extends BaseMetaDataRetriever {
 
 	@Override
 	protected void cleanup() {
-		// TODO Auto-generated method stub
 
 	}
 

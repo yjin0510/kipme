@@ -12,8 +12,8 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.infoxu.app.keepme.data.RequestMessage;
 import com.infoxu.app.keepme.data.User;
@@ -29,7 +29,7 @@ import com.infoxu.app.keepme.util.Util;
  */
 public class CLIConsole {
 	// Logging
-	private static final Log logger = LogFactory.getLog(CLIConsole.class);
+	private static final Logger logger = LogManager.getLogger(CLIConsole.class);
 	
 	// Command line options
 	private static final Options options = new Options();

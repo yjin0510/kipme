@@ -9,15 +9,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author yujin
  *
  */
 public final class ServiceProperty {
-	private static Log logger = LogFactory.getLog(ServiceProperty.class);
+	private static Logger logger = LogManager.getLogger(ServiceProperty.class);
 	private static Properties prop = null;
 	private static ServiceProperty sp = null;
 	

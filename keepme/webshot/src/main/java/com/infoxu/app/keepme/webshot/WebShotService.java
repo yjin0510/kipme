@@ -5,12 +5,10 @@
 package com.infoxu.app.keepme.webshot;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -18,14 +16,12 @@ import java.util.concurrent.Executors;
 import org.apache.commons.daemon.Daemon;
 import org.apache.commons.daemon.DaemonContext;
 import org.apache.commons.daemon.DaemonInitException;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.validator.routines.UrlValidator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebDriverException;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.MoreObjects.ToStringHelper;
-import com.google.common.collect.Lists;
 import com.infoxu.app.keepme.data.Message;
 import com.infoxu.app.keepme.data.RequestMessage;
 import com.infoxu.app.keepme.data.Snapshot;
@@ -40,8 +36,6 @@ import com.infoxu.app.keepme.webshot.MetaDataRetrieverFactory.MDRType;
 import com.infoxu.app.keepme.webshot.SeleniumSnapshotRetriever.SSRType;
 import com.infoxu.app.keepme.util.ServiceProperty;
 import com.infoxu.app.keepme.util.Util;
-import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.ShutdownSignalException;
 
 /**
  * WebShot service: create service threads
@@ -56,7 +50,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  *
  */
 public class WebShotService implements Daemon {
-	private static Log logger = LogFactory.getLog(WebShotService.class);
+	private static Logger logger = LogManager.getLogger(WebShotService.class);
 	private static final int NUM_WORKERS = Integer.parseInt(ServiceProperty.getInstance()
 			.getProperty("webshot.number.worker", "1"));
 	
@@ -70,27 +64,20 @@ public class WebShotService implements Daemon {
 	public static void main(String[] args) throws Exception {
 		boolean stop = false;
 		// For stopping the service
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+//		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		WebShotService wss = new WebShotService();
-		wss.init(null);
-		wss.start();
-		logger.info("WebShotService test-run will only last for 1 hour.");
-		Thread.sleep(3600000);
-//		try {	
-//			while (!stop) {
-//				String line = br.readLine();
-//				if (line.equalsIgnoreCase("stop")) {
-//					break;
-//				}
-//			}
-//		} catch (Exception e) {
-//			logger.error("Exist with error: " + e.getMessage());
-//		} finally {
-//			
-//		}
-		wss.stop();
-		wss.destroy();
-		logger.info("WebShotService test-run finished.");
+		try {
+			wss.init(null);
+			wss.start();
+			logger.info("WebShotService test-run will only last for 1 hour.");
+			Thread.sleep(3600000);
+		} catch (InterruptedException e) {
+			logger.info("User tried to stop WebShotService.");
+		} finally {
+			wss.stop();
+			wss.destroy();
+			logger.info("WebShotService stopped. Bye-bye.");
+		}
 	}
 
 	public void destroy() {
@@ -151,9 +138,9 @@ public class WebShotService implements Daemon {
 		public void run() {
 			while (!stop) {
 				try {
-					logger.info("Worker " + tid + " waiting for request");
+					logger.debug("Worker " + tid + " waiting for request");
 					RequestMessage request = recvQ.getNext();
-					logger.info("Worker " + tid + " received request: " 
+					logger.debug("Worker " + tid + " received request: " 
 							+ request.getReqId() + ", " + request.getUrl());
 					Message reply = process(request);
 					// Log the process results
@@ -161,7 +148,7 @@ public class WebShotService implements Daemon {
 							counters.get(reply.getStatus()) == null ? 
 									1 : counters.get(reply.getStatus()) + 1);
 					
-					logger.info("Worker " + tid + " get info " + reply.toString());
+					logger.debug("Worker " + tid + " get info " + reply.toString());
 //					sendQ.send(reply);
 					logger.debug("Worker " + tid + " send req " + request.getReqId() + " to reply_queue");
 //					indexQ.send(reply);
@@ -201,12 +188,14 @@ public class WebShotService implements Daemon {
 				image = ssr.getSnapshot(url);
 			} catch (MalformedURLException e) {
 				logger.error("Webshot Worker " + tid + " failed to get snapshot for reqId " 
-						+ request.getReqId() + " : "+ e.getMessage());				
+						+ request.getReqId() + ", url: " + url, e);				
 				Message reply = new Message(Message.Status.FAIL_IMAGE, null, request);
 				return reply;
 			} catch (WebDriverException e) {
-				logger.error("Thread " + this.tid + " receives exception from the driver: " 
-						+ e.getCause().getMessage());
+				logger.error("Thread " + this.tid + " receives exception from the driver for reqId " 
+						+ request.getReqId() + ", url: " + url, e);
+				Message reply = new Message(Message.Status.FAIL_IMAGE, null, request);
+				return reply;
 			}
 			
 			// INCOMPLETE

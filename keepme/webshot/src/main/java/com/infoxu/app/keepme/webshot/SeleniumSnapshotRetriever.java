@@ -5,10 +5,11 @@
 package com.infoxu.app.keepme.webshot;
 
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -21,7 +22,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  *
  */
 final class SeleniumSnapshotRetriever {
-	private static Log logger = LogFactory.getLog(SeleniumSnapshotRetriever.class);
+	private static Logger logger = LogManager.getLogger(SeleniumSnapshotRetriever.class);
 	public enum SSRType {
 		SELENIUM_FIREFOX,
 		SELENIUM_CHROME,
@@ -38,7 +39,6 @@ final class SeleniumSnapshotRetriever {
 	public SeleniumSnapshotRetriever(SSRType type) {
 		if (type == SSRType.SELENIUM_FIREFOX) {
 			firefox = new FirefoxBinary();
-//			firefox.setEnvironmentProperty("DISPLAY", "-1");
 			driver = new FirefoxDriver(firefox, null);
 		} else {
 			throw new UnsupportedOperationException("Selenium snapshot retriever type " + 
@@ -47,6 +47,8 @@ final class SeleniumSnapshotRetriever {
 	}
 	
 	public byte[] getSnapshot(URL request) {
+		// set a timeout to load a page, avoid driver freezing
+		driver.manage().timeouts().pageLoadTimeout(15, TimeUnit.SECONDS); 
 		driver.get(request.toString());
 		image = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
 		return image;
@@ -72,7 +74,7 @@ final class SeleniumSnapshotRetriever {
 		try {
 			driver.close();
 		} catch (Exception e) {
-			logger.error("Fail to close WebDriver: " + e.getMessage());
+			logger.error("Fail to close WebDriver: ", e);
 		} finally {
 			driver = null;
 			firefox = null;
