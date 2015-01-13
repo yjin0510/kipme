@@ -15,6 +15,7 @@ import com.infoxu.app.keepme.data.hibernate.HibernateUtil;
 import com.infoxu.app.keepme.data.hibernate.SnapshotRecord;
 
 /**
+ * Wrapper for Hibernate database access APIs
  * @author yujin
  *
  */
@@ -34,6 +35,9 @@ class DatabaseStorage implements Storage {
 		} catch (Exception e) {
 			logger.error("Unable to retrieve SnapshotRecord for id " 
 					+ id + " : " + e.getMessage());
+		}
+		if (ssr == null) {
+			return null;
 		}
 		return DataUtil.getMessageFromSnapshotRecord(ssr);
 	}
@@ -82,5 +86,22 @@ class DatabaseStorage implements Storage {
 			session = null;
 			sessionFactory = null;
 		}
+	}
+
+	public void delete(long id) {
+		if (session == null) {
+			throw new RuntimeException("Hibernate session has not been established yet.");
+		}
+		
+		session.beginTransaction();
+		SnapshotRecord ssr = null;
+		try {
+			ssr = (SnapshotRecord) session.get(SnapshotRecord.class, id);
+		} catch (Exception e) {
+			logger.error("Unable to retrieve SnapshotRecord for id " 
+					+ id + " : " + e.getMessage());
+		}
+		session.delete(ssr);
+		session.getTransaction().commit();
 	}
 }

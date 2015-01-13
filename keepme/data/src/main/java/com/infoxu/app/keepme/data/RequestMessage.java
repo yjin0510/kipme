@@ -17,7 +17,7 @@ public class RequestMessage implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 4707764609889401726L;
-	private long reqId; // unique identifier of the session
+	private long reqId; // unique identifier of the session, will not be saved into database
 	private String url; // request url
 	private long indexId; 	// index id, used for retrieving an existing snapshot 
 							// or as the primary key for the new snapshot

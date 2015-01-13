@@ -4,6 +4,8 @@
  */
 package com.infoxu.app.keepme.data.storage;
 
+import org.apache.commons.lang.SerializationUtils;
+
 import redis.clients.jedis.Jedis;
 
 import com.infoxu.app.keepme.data.DataUtil;
@@ -11,7 +13,7 @@ import com.infoxu.app.keepme.data.Message;
 import com.infoxu.app.keepme.util.ServiceProperty;
 
 /**
- * Main class for cache access
+ * Wrapper for Redis access APIs
  * @author yujin
  *
  */
@@ -23,14 +25,19 @@ class CacheStorage implements Storage {
 				.getProperty("redis.server.port", "6379"));
 	
 	public Message get(long id) {
-		// TODO Auto-generated method stub
-//		return (Message) jedis.get(DataUtil.getKeyFromId(id));
-		return null;
+		byte[] key = SerializationUtils.serialize(DataUtil.getKeyFromId(id));
+		byte[] val = jedis.get(key);
+		Message message = null;
+		if (val != null) {
+			message = (Message) SerializationUtils.deserialize(val);
+		}
+		return message;
 	}
 
 	public void put(long id, Message message) {
-		// TODO Auto-generated method stub
-
+		byte[] key = SerializationUtils.serialize(DataUtil.getKeyFromId(id));
+		byte[] val = SerializationUtils.serialize(message);
+		jedis.set(key, val);
 	}
 
 	public void init() {
@@ -41,6 +48,11 @@ class CacheStorage implements Storage {
 	public void close() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public void delete(long id) {
+		byte[] key = SerializationUtils.serialize(DataUtil.getKeyFromId(id));
+		jedis.del(key);
 	}
 
 }

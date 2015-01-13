@@ -15,4 +15,5 @@ public interface Storage {
 	public void put(long id, Message message); // id, object, time-to-live
 	public void init(); // initialize connection to storage
 	public void close(); // close connection
+	public void delete(long id); // delete message
 }
