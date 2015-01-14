@@ -81,8 +81,7 @@ public class WebShotService implements Daemon {
 	}
 
 	public void destroy() {
-		executor.shutdown();
-		logger.info("WebShotService cleared.");
+		
 	}
 
 	public void init(DaemonContext arg0) throws DaemonInitException, Exception {
