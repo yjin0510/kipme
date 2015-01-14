@@ -37,22 +37,22 @@ class DatabaseStorage implements Storage {
 					+ id + " : " + e.getMessage());
 		}
 		if (ssr == null) {
+			logger.debug("Failed to find key " + id + " in db.");
 			return null;
+		} else {
+			logger.debug("Found key " + id + " in db.");
 		}
 		return DataUtil.getMessageFromSnapshotRecord(ssr);
 	}
 
 	// Insert an item into database
 	public void put(long id, Message message) {
-		if (session == null) {
-			throw new RuntimeException("Hibernate session has not been established yet.");
-		}
-		
 		// Construct database record
 		SnapshotRecord record = DataUtil.getSnapshotRecordFromMessage(message);
 		
-		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();  
-        Session session = sessionFactory.openSession();  
+		if (session == null) {
+			throw new RuntimeException("Hibernate session has not been established yet.");
+		}
         session.beginTransaction();  
 
         session.save(record);  
@@ -79,7 +79,7 @@ class DatabaseStorage implements Storage {
 	public void close() {
 		try {
 			session.close(); 
-			sessionFactory.close();
+//			sessionFactory.close();
 		} catch (Exception e) {
 			logger.error("Failed to close Hibernate session: " + e.getMessage());
 		} finally {
